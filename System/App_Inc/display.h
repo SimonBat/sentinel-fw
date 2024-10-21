@@ -1,15 +1,14 @@
 #ifndef __DISPLAY_H
 #define __DISPLAY_H
 
-#include "stm32l4xx_hal.h"
 #include "bsp.h"
 #include "bat.h"
 
-#define DISPLAY_MAX_CONTEXTS	4
-#define DISPLAY_UPDATE_TMO		60 /* ms */
-#define DISPLAY_PASSWORD_NBR	5
+#define DISPLAY_MAX_CONTEXTS		4U
+#define DISPLAY_UPDATE_TMO			60U /* ms */
+#define DISPLAY_PASSWORD_NBR		5U
 
-typedef struct{
+typedef struct {
 	uint8_t context;
 	__IO uint16_t updateTmo;
 	uint8_t passwordNbr;
@@ -18,7 +17,7 @@ typedef struct{
 	uint8_t xDirection;
 	int16_t xScroll;
 	uint8_t btFlag;
-}display_ts;
+} display_ts;
 
 /* Global functions declarations */
 void DISPLAY_Prepare_Context(display_ts* _display);
