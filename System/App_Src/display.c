@@ -61,6 +61,7 @@ void DISPLAY_Prepare_Context(display_ts* _display)
   * @retval None
   ***************************************************************************************************************************************
   */
+// cppcheck-suppress constParameterCallback
 static void DISPLAY_Prepare_1_Context(display_ts* _display)
 {
 	uint8_t _x;
@@ -89,6 +90,7 @@ static void DISPLAY_Prepare_1_Context(display_ts* _display)
   * @retval None
   ***************************************************************************************************************************************
   */
+// cppcheck-suppress constParameterCallback
 static void DISPLAY_Prepare_2_Context(display_ts* _display)
 {
 	char _numBuff[16];
@@ -117,7 +119,6 @@ static void DISPLAY_Prepare_3_Context(display_ts* _display)
 	uint8_t _idx;
 	uint8_t* _buff;
 	int16_t _xLength;
-	int16_t _xOffset;
 	char _numBuff[16];
 	profile_data_ts* _data = FF_PROFILE_Get_Data(_display->horizontalListIdx);
 
@@ -127,11 +128,12 @@ static void DISPLAY_Prepare_3_Context(display_ts* _display)
 	if(_display->btFlag){SSD1306_Draw_String(58, 0, 0, ">>", &TM_Font_7x10, OLED_COLOR_WHITE);}
 	else{SSD1306_Draw_String(58, 0, 0, "  ", &TM_Font_7x10, OLED_COLOR_WHITE);}
 
-	if((_display->horizontalListIdx + 1U) < 10U){sprintf(_numBuff,"  %d/%d",(_display->horizontalListIdx + 1U),FF_PROFILE_Get_Data_Number());}
+	if((_display->horizontalListIdx + 1U) < 10U){sprintf(_numBuff,"  %d/%d",(_display->horizontalListIdx + 1),FF_PROFILE_Get_Data_Number());}
+	// cppcheck-suppress knownConditionTrueFalse
 	else if(((_display->horizontalListIdx + 1U) >= 10U) && ((_display->horizontalListIdx + 1U) < 100U))
-	{sprintf(_numBuff, " %d/%d", (_display->horizontalListIdx + 1U), FF_PROFILE_Get_Data_Number());}
+	{sprintf(_numBuff, " %d/%d", (_display->horizontalListIdx + 1), FF_PROFILE_Get_Data_Number());}
 	else if((_display->horizontalListIdx + 1U) >= 100U)
-	{sprintf(_numBuff, "%d/%d", (_display->horizontalListIdx + 1U), FF_PROFILE_Get_Data_Number());}
+	{sprintf(_numBuff, "%d/%d", (_display->horizontalListIdx + 1), FF_PROFILE_Get_Data_Number());}
 
 	SSD1306_Draw_String(0, 0, 0, _numBuff, &TM_Font_7x10, OLED_COLOR_WHITE);
 	SSD1306_Draw_Line(0, 14, 127, 14, OLED_COLOR_WHITE);
@@ -168,7 +170,7 @@ static void DISPLAY_Prepare_3_Context(display_ts* _display)
 
 	if(_xLength > 118)
 	{
-		_xOffset = 118 - _xLength + 10;
+		int16_t _xOffset = 118 - _xLength + 10;
 		if(_xOffset > 0){_xOffset = 0;}
 
 		if((_display->xScroll > _xOffset) && (!_display->xDirection)){_display->xScroll--;}
@@ -218,6 +220,7 @@ static void DISPLAY_Battery_Status(uint8_t _x, uint8_t _y)
 	uint8_t _idxMax = 18U * _soc / 100U;
 
 	if(_soc < 10U){_xTmp = _x + 14U;}
+	// cppcheck-suppress knownConditionTrueFalse
 	else if((_soc >= 10U) && (_soc < 100U)){_xTmp = _x + 7U;}
 	else{_xTmp = _x;}
 

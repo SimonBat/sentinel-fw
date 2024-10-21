@@ -207,7 +207,7 @@ int main(void)
   */
 static void SYSTEM_Start_Scheduler(system_ts* _system)
 {
-	profile_data_ts* _profileData;
+	const profile_data_ts* _profileData;
 	BTPS_Initialization_t BTPS_Initialization;
 	HCI_DriverInformation_t HCI_DriverInformation;
 

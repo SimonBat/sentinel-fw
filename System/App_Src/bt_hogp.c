@@ -266,9 +266,7 @@ int BT_HOGP_Application_Init(HCI_DriverInformation_t *_hciDriverInformation, BTP
   */
 static int BT_HOGP_Open_Stack(HCI_DriverInformation_t *_hciDriverInformation, BTPS_Initialization_t *_btpsInitialization)
 {
-	int _result;
 	int _retVal = 0;
-	char _bluetoothAddress[16];
 	Byte_t _status;
 	BD_ADDR_t _bdAddr;
 	unsigned int _serviceID;
@@ -285,7 +283,7 @@ static int BT_HOGP_Open_Stack(HCI_DriverInformation_t *_hciDriverInformation, BT
 		/* Clear the application state information */
 		BTPS_MemInitialize(&BT_HOGP_ApplicationStateInfo, 0U, sizeof(BT_HOGP_ApplicationStateInfo));
 		/* Initialize the Stack */
-		_result = BSC_Initialize(_hciDriverInformation, 0U);
+		int _result = BSC_Initialize(_hciDriverInformation, 0U);
 
 		/* Next, check the return value of the initialization to see if it was successful */
 		if(_result > 0)
@@ -309,6 +307,7 @@ static int BT_HOGP_Open_Stack(HCI_DriverInformation_t *_hciDriverInformation, BT
 			/* Let's output the Bluetooth Device Address so that the user knows what the Device Address is */
 			if(!GAP_Query_Local_BD_ADDR(BT_HOGP_ApplicationStateInfo.BluetoothStackID, &_bdAddr))
 			{
+				char _bluetoothAddress[16];
 				BT_HOGP_BD_ADDR_To_Str(_bdAddr, _bluetoothAddress);
 				BT_HOGP_DBG_Display(("BD_ADDR: %s\r\n", _bluetoothAddress));
 			}
@@ -714,20 +713,17 @@ static bt_hogp_device_info_ts * BT_HOGP_Search_Device_Info_Entry_By_BD_ADDR(bt_h
   */
 static void BT_HOGP_Format_Advertising_Data(unsigned int _bluetoothStackID)
 {
-	int _result;
-	unsigned int _length;
-	unsigned int _stringLength;
-	union{
+	union {
 		Advertising_Data_t AdvertisingData;
 		Scan_Response_Data_t ScanResponseData;
-	}_advertisementDataBuffer;
+	} _advertisementDataBuffer;
 
 	/* First, check that valid Bluetooth Stack ID exists. */
 	if(_bluetoothStackID)
 	{
 		BTPS_MemInitialize(&(_advertisementDataBuffer.AdvertisingData), 0U, sizeof(Advertising_Data_t));
 
-		_length = 0U;
+		unsigned int _length = 0U;
 		/* Set the Flags A/D Field (1 byte type and 1 byte Flags. */
 		_advertisementDataBuffer.AdvertisingData.Advertising_Data[0] = 2;
 		_advertisementDataBuffer.AdvertisingData.Advertising_Data[1] = HCI_LE_ADVERTISING_REPORT_DATA_TYPE_FLAGS;
@@ -749,7 +745,7 @@ static void BT_HOGP_Format_Advertising_Data(unsigned int _bluetoothStackID)
 		_length += _advertisementDataBuffer.AdvertisingData.Advertising_Data[_length] + 1U;
 
 		/* Set the Device Name String. */
-		_stringLength = BTPS_StringLength(BT_HOGP_LE_DEMO_DEVICE_NAME);
+		unsigned int _stringLength = BTPS_StringLength(BT_HOGP_LE_DEMO_DEVICE_NAME);
 		if(_stringLength < (ADVERTISING_DATA_MAXIMUM_SIZE - _length - 2U))
 		{_advertisementDataBuffer.AdvertisingData.Advertising_Data[_length + 1U] = HCI_LE_ADVERTISING_REPORT_DATA_TYPE_LOCAL_NAME_COMPLETE;}
 		else
@@ -762,7 +758,7 @@ static void BT_HOGP_Format_Advertising_Data(unsigned int _bluetoothStackID)
 		BTPS_MemCopy(&(_advertisementDataBuffer.AdvertisingData.Advertising_Data[_length + 2U]), BT_HOGP_LE_DEMO_DEVICE_NAME, _stringLength);
 		_length += _advertisementDataBuffer.AdvertisingData.Advertising_Data[_length] + 1U;
 		/* Write thee advertising data to the chip. */
-		_result = GAP_LE_Set_Advertising_Data(_bluetoothStackID, _length, &(_advertisementDataBuffer.AdvertisingData));
+		int _result = GAP_LE_Set_Advertising_Data(_bluetoothStackID, _length, &(_advertisementDataBuffer.AdvertisingData));
 
 		if(!_result){BT_HOGP_DBG_Display(("Advertising Data Configured Successfully.\r\n"));}
 		else{BT_HOGP_DBG_Display(("GAP_LE_Set_Advertising_Data(dtAdvertising) returned %d.\r\n", _result));}
@@ -780,7 +776,6 @@ static void BT_HOGP_Format_Advertising_Data(unsigned int _bluetoothStackID)
   */
 static int BT_HOGP_Set_Pairable(void)
 {
-	int _result;
 	int _retVal = 0;
 
 	/* First, check that a valid Bluetooth Stack ID exists. */
@@ -788,7 +783,7 @@ static int BT_HOGP_Set_Pairable(void)
 	{
 		/* Set the LE Pairability Mode. */
 		/* Attempt to set the attached device to be pairable. */
-		_result = GAP_LE_Set_Pairability_Mode(BT_HOGP_ApplicationStateInfo.BluetoothStackID, lpmPairableMode);
+		int _result = GAP_LE_Set_Pairability_Mode(BT_HOGP_ApplicationStateInfo.BluetoothStackID, lpmPairableMode);
 
 		/* Next, check the return value of the GAP Set Pairability mode command for successful execution */
 		if(!_result)
@@ -854,11 +849,11 @@ static Boolean_t BT_HOGB_Create_New_Device_Info_Entry(bt_hogp_device_info_ts **_
 													  GAP_LE_Address_Type_t _connectionAddressType, BD_ADDR_t _connectionBdAddr)
 {
 	Boolean_t _retVal = FALSE;
-	bt_hogp_device_info_ts *_deviceInfoPtr;
 
 	/* Verify that the passed in parameters seem semi-valid. */
 	if((_listHead) && (!COMPARE_NULL_BD_ADDR(_connectionBdAddr)))
 	{
+		bt_hogp_device_info_ts *_deviceInfoPtr;
 		/* Allocate the memory for the entry. */
 		if((_deviceInfoPtr = BTPS_AllocateMemory(sizeof(bt_hogp_device_info_ts))) != NULL)
 		{
@@ -923,7 +918,6 @@ static int BT_HOGP_Slave_Security_ReEstablishment(unsigned int _bluetoothStackID
 static bt_hogp_device_info_ts *BT_HOGP_Delete_Device_Info_Entry(bt_hogp_device_info_ts **_listHead, \
 																GAP_LE_Address_Type_t _addressType, BD_ADDR_t _bdAddr)
 {
-	bt_hogp_device_info_ts *_lastEntry;
 	bt_hogp_device_info_ts *_deviceInfo;
 
 	if((_listHead) && (!COMPARE_NULL_BD_ADDR(_bdAddr)))
@@ -931,6 +925,7 @@ static bt_hogp_device_info_ts *BT_HOGP_Delete_Device_Info_Entry(bt_hogp_device_i
 		/* Check to see if this is a resolvable address type. If so we will search the list based on the IRK */
 		if((latRandom == _addressType) && (GAP_LE_TEST_RESOLVABLE_ADDRESS_BITS(_bdAddr)))
 		{
+			bt_hogp_device_info_ts *_lastEntry;
 			/* Now, let's search the list until we find the correct entry. */
 			_deviceInfo = *_listHead;
 
@@ -1016,12 +1011,12 @@ static void BT_HOGP_Display_Pairing_Information(GAP_LE_Pairing_Capabilities_t _p
 static int BT_HOGP_Slave_Pairing_Request_Response(unsigned int _bluetoothStackID, BD_ADDR_t _bdAddr)
 {
 	int _retVal;
-	BT_HOGP_BOARD_STR_T _boardStr;
 	GAP_LE_Authentication_Response_Information_t _authenticationResponseData;
 
 	/* Make sure a Bluetooth Stack is open. */
 	if(_bluetoothStackID)
 	{
+		BT_HOGP_BOARD_STR_T _boardStr;
 		BT_HOGP_BD_ADDR_To_Str(_bdAddr, _boardStr);
 		BT_HOGP_DBG_Display(("Sending Pairing Response to %s.\r\n", _boardStr));
 
@@ -1205,8 +1200,6 @@ static int BT_HOGP_Disconnect_LE_Device(unsigned int _bluetoothStackID, BD_ADDR_
 static void BTPSAPI BT_HOGP_GATT_Connection_Event_Callback(unsigned int _bluetoothStackID, \
 														   GATT_Connection_Event_Data_t *_gattConnectionEventData, unsigned long _callbackParameter)
 {
-	BT_HOGP_BOARD_STR_T _boardStr;
-
 	/* Verify that all parameters to this callback are Semi-Valid. */
 	if((_bluetoothStackID) && (_gattConnectionEventData))
 	{
@@ -1216,6 +1209,7 @@ static void BTPSAPI BT_HOGP_GATT_Connection_Event_Callback(unsigned int _bluetoo
 			case etGATT_Connection_Device_Connection:
 			if(_gattConnectionEventData->Event_Data.GATT_Device_Connection_Data)
 			{
+				BT_HOGP_BOARD_STR_T _boardStr;
 				BT_HOGP_DBG_Display(("\r\netGATT_Connection_Device_Connection with size %u: \r\n", _gattConnectionEventData->Event_Data_Size));
 				BT_HOGP_BD_ADDR_To_Str(_gattConnectionEventData->Event_Data.GATT_Device_Connection_Data->RemoteDevice, _boardStr);
 				BT_HOGP_DBG_Display(("   Connection ID:   %u.\r\n", _gattConnectionEventData->Event_Data.GATT_Device_Connection_Data->ConnectionID));
@@ -1283,17 +1277,18 @@ static void BTPSAPI BT_HOGP_GATT_Connection_Event_Callback(unsigned int _bluetoo
   */
 static void BTPSAPI BT_HOGP_BAS_Event_Callback(unsigned int _bluetoothStackID, BAS_Event_Data_t *_basEventData, unsigned long _callbackParameter)
 {
-	int _result;
-	bt_hogp_device_info_ts *_deviceInfo;
-
 	/* Verify that all parameters to this callback are Semi-Valid. */
 	if((_bluetoothStackID) && (_basEventData))
 	{
+		bt_hogp_device_info_ts *_deviceInfo;
+
 		/* Search for the Device entry for our current LE connection. */
 		if(NULL != (_deviceInfo = BT_HOGP_Search_Device_Info_Entry_By_BD_ADDR(&BT_HOGP_DeviceInfoList, \
 																	 	 	  BT_HOGP_ApplicationStateInfo.LEConnectionInfo.AddressType, \
 																			  BT_HOGP_ApplicationStateInfo.LEConnectionInfo.BD_ADDR)))
 		{
+			int _result;
+
 			/* Determine the Battery Service Event that occurred. */
 			switch(_basEventData->Event_Data_Type)
 			{
@@ -1377,12 +1372,9 @@ static void BTPSAPI BT_HOGP_BAS_Event_Callback(unsigned int _bluetoothStackID, B
   */
 static void BTPSAPI BT_HOGP_HIDS_Event_Callback(unsigned int _bluetoothStackID, HIDS_Event_Data_t *_hidsEventData, unsigned long _callbackParameter)
 {
-	int _result;
 	Byte_t _errorCode;
 	Word_t _configuration;
-	Byte_t *_reportData;
 	bt_hogp_device_info_ts *_deviceInfo;
-	unsigned int _reportDataLength;
 
 	/* Verify that all parameters to this callback are Semi-Valid. */
 	if((_bluetoothStackID) && (_hidsEventData))
@@ -1392,6 +1384,10 @@ static void BTPSAPI BT_HOGP_HIDS_Event_Callback(unsigned int _bluetoothStackID, 
 																	  	  	  BT_HOGP_ApplicationStateInfo.LEConnectionInfo.AddressType, \
 																			  BT_HOGP_ApplicationStateInfo.LEConnectionInfo.BD_ADDR)))
 		{
+			int _result;
+			Byte_t *_reportData;
+			unsigned int _reportDataLength;
+
 			/* Determine the HID Service Event that occurred. */
 			switch(_hidsEventData->Event_Data_Type)
 			{
@@ -1655,8 +1651,6 @@ static void BTPSAPI BT_HOGP_HIDS_Event_Callback(unsigned int _bluetoothStackID, 
   */
 static void BTPSAPI BT_HOGP_GAP_LE_Event_Callback(unsigned int _bluetoothStackID, GAP_LE_Event_Data_t *_gapLEEventData, unsigned long _callbackParameter)
 {
-	int _result;
-	BT_HOGP_BOARD_STR_T _boardStr;
 	bt_hogp_device_info_ts *_deviceInfo;
 	Long_Term_Key_t _generatedLTK;
 	GAP_LE_Authentication_Event_Data_t *_authenticationEventData;
@@ -1665,6 +1659,9 @@ static void BTPSAPI BT_HOGP_GAP_LE_Event_Callback(unsigned int _bluetoothStackID
 	/* Verify that all parameters to this callback are Semi-Valid. */
 	if((_bluetoothStackID) && (_gapLEEventData))
 	{
+		int _result;
+		BT_HOGP_BOARD_STR_T _boardStr;
+
 		switch(_gapLEEventData->Event_Data_Type)
 		{
 			case etLE_Connection_Complete:
@@ -1693,6 +1690,7 @@ static void BTPSAPI BT_HOGP_GAP_LE_Event_Callback(unsigned int _bluetoothStackID
 					BT_HOGP_Post_Application_Mailbox(BT_HOGP_APPLICATION_MAILBOX_MESSAGE_ID_LE_CONNECTED);
 
 					/* Make sure that no entry already exists. */
+					// cppcheck-suppress unreadVariable
 					if(NULL == (_deviceInfo = BT_HOGP_Search_Device_Info_Entry_By_BD_ADDR(&BT_HOGP_DeviceInfoList, \
 																				 	  	 _gapLEEventData->Event_Data.GAP_LE_Connection_Complete_Event_Data->Peer_Address_Type, \
 																						 _gapLEEventData->Event_Data.GAP_LE_Connection_Complete_Event_Data->Peer_Address)))
@@ -2054,22 +2052,21 @@ static void BTPSAPI BT_HOGP_HCI_Sleep_Callback(Boolean_t _sleepAllowed, unsigned
   */
 static void BT_HOGP_Notify_Battery_Level(bt_hogp_application_state_info_ts *_applicationStateInfo, Boolean_t _force)
 {
-	int _result;
-	bt_hogp_device_info_ts *_deviceInfo;
-
 	/* Make sure the input parameters are semi-valid. */
 	if((_applicationStateInfo) && (_applicationStateInfo->Flags & BT_HOGP_APPLICATION_STATE_INFO_FLAGS_LE_CONNECTED))
 	{
+		bt_hogp_device_info_ts *_deviceInfo;
+
 		/* Search for the device info structure for this device. */
 		if(NULL != (_deviceInfo = BT_HOGP_Search_Device_Info_Entry_By_BD_ADDR(&BT_HOGP_DeviceInfoList, _applicationStateInfo->LEConnectionInfo.AddressType, \
 					_applicationStateInfo->LEConnectionInfo.BD_ADDR)))
 		{
 			/* Verify that we can send a notification to this device. */
 			if((_deviceInfo->BASServerInformation.Battery_Level_Client_Configuration & GATT_CLIENT_CONFIGURATION_CHARACTERISTIC_NOTIFY_ENABLE) && \
-			   ((_force) || ((!_force) && (_deviceInfo->LostNotifiedBatteryLevel != _applicationStateInfo->BatteryLevel))))
+			   ((_force) || (_deviceInfo->LostNotifiedBatteryLevel != _applicationStateInfo->BatteryLevel)))
 			{
 				/* Attempt to send the notification to the device. */
-				_result = BAS_Notify_Battery_Level(_applicationStateInfo->BluetoothStackID, \
+				int _result = BAS_Notify_Battery_Level(_applicationStateInfo->BluetoothStackID, \
 						  _applicationStateInfo->BASInstanceID, _applicationStateInfo->LEConnectionInfo.ConnectionID, \
 						  (Byte_t)_applicationStateInfo->BatteryLevel);
 				if(!_result){_deviceInfo->LostNotifiedBatteryLevel = _applicationStateInfo->BatteryLevel;}
@@ -2140,13 +2137,13 @@ static int BT_HOGP_Start_Advertising(unsigned int _bluetoothStackID)
   */
 static void BT_HOGP_Notify_Keyboard_Report(bt_hogp_application_state_info_ts *_applicationStateInfo)
 {
-	int _result;
-	bt_hogp_device_info_ts *_deviceInfo;
 	HIDS_Report_Reference_Data_t _reportReferenceData;
 
 	/* Make sure the input parameters are semi-valid. */
 	if((_applicationStateInfo) && (_applicationStateInfo->Flags & BT_HOGP_APPLICATION_STATE_INFO_FLAGS_LE_CONNECTED))
 	{
+		bt_hogp_device_info_ts *_deviceInfo;
+
 		/* Search for the device info structure for this device. */
 		if(NULL != (_deviceInfo = BT_HOGP_Search_Device_Info_Entry_By_BD_ADDR(&BT_HOGP_DeviceInfoList, \
 																	 	 	  _applicationStateInfo->LEConnectionInfo.AddressType, \
@@ -2158,6 +2155,8 @@ static void BT_HOGP_Notify_Keyboard_Report(bt_hogp_application_state_info_ts *_a
 			  */
 			if(_applicationStateInfo->LEConnectionInfo.Flags & BT_HOGP_CONNECTION_INFO_FLAGS_CONNECTION_ENCRYPTED)
 			{
+				int _result;
+
 				/* Check to see what characteristic should be notified based on the operating mode. */
 				_reportReferenceData.ReportID = 0;
 				_reportReferenceData.ReportType = HIDS_REPORT_REFERENCE_REPORT_TYPE_INPUT_REPORT;
@@ -2208,7 +2207,6 @@ uint8_t BT_HOGP_Check_Mailbox_Status(void)
   */
 void BT_HOGP_Task_Handler(void)
 {
-	int _result;
 	Byte_t _messageID;
 	GAP_LE_Authentication_Response_Information_t _gapLeAuthenticationResponseInformation;
 
@@ -2258,7 +2256,7 @@ void BT_HOGP_Task_Handler(void)
 					_gapLeAuthenticationResponseInformation.Authentication_Data.Passkey = (DWord_t)(BT_HOGP_ApplicationStateInfo.LEConnectionInfo.Passkey);
 
 					/* Submit the Authentication Response. */
-					_result = GAP_LE_Authentication_Response(BT_HOGP_ApplicationStateInfo.BluetoothStackID, \
+					int _result = GAP_LE_Authentication_Response(BT_HOGP_ApplicationStateInfo.BluetoothStackID, \
 															 BT_HOGP_ApplicationStateInfo.LEConnectionInfo.BD_ADDR, \
 															 &_gapLeAuthenticationResponseInformation);
 					if(!_result){BT_HOGP_DBG_Display(("Successfully responded with passkey.\r\n"));}
@@ -2276,7 +2274,7 @@ void BT_HOGP_Task_Handler(void)
   * @retval None
   ***************************************************************************************************************************************
   */
-void BT_HOGP_Send_Data_Reports(uint8_t* _data, uint8_t _nbr)
+void BT_HOGP_Send_Data_Reports(const uint8_t* _data, uint8_t _nbr)
 {
 	if(BT_HOGP_ApplicationStateInfo.LEConnectionInfo.connectionFlag)
 	{
@@ -2288,6 +2286,7 @@ void BT_HOGP_Send_Data_Reports(uint8_t* _data, uint8_t _nbr)
 		}
 
 		/* TAB */
+		// cppcheck-suppress knownConditionTrueFalse
 		BT_HOGP_ApplicationStateInfo.CurrentInputReport[0] = ((BT_HOGP_OGP_HID_KEYS[9] & 0x80) ? 0x02 : 0x00);
 		BT_HOGP_ApplicationStateInfo.CurrentInputReport[2] = (BT_HOGP_OGP_HID_KEYS[9] & 0x7F);
 		BT_HOGP_Notify_Keyboard_Report(&BT_HOGP_ApplicationStateInfo);

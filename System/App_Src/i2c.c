@@ -52,6 +52,7 @@ void I2C_Driver_Init(void)
   * @retval None
   ***************************************************************************************************************************************
   */
+// cppcheck-suppress constParameterPointer
 void HAL_I2C_MspInit(I2C_HandleTypeDef* _hi2c)
 {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -81,6 +82,7 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* _hi2c)
   * @retval None
   ***************************************************************************************************************************************
   */
+// cppcheck-suppress constParameterPointer
 void HAL_I2C_MspDeInit(I2C_HandleTypeDef* _hi2c)
 {
 	if(I2C1 == _hi2c->Instance)

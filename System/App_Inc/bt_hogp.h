@@ -116,7 +116,7 @@ typedef struct _tagDeviceInfo_t {
 int BT_HOGP_Application_Init(HCI_DriverInformation_t *_hciDriverInformation, BTPS_Initialization_t *_btpsInitialization);
 uint8_t BT_HOGP_Check_Mailbox_Status(void);
 void BT_HOGP_Task_Handler(void);
-void BT_HOGP_Send_Data_Reports(uint8_t* _data, uint8_t _nbr);
+void BT_HOGP_Send_Data_Reports(const uint8_t* _data, uint8_t _nbr);
 void BT_HOGP_Update_Battery_Level(void);
 uint8_t BT_HOGP_Get_Connection_Status(void);
 

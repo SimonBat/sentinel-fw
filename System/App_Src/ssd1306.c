@@ -266,7 +266,7 @@ void SSD1306_Draw_HEX(uint8_t _ch, tm_font_def_ts *_font, ssd1306_color_te _colo
   */
 void SSD1306_Draw_Line(int16_t _x0, int16_t _y0, int16_t _x1, int16_t _y1, ssd1306_color_te _color)
 {
-	int16_t _dx, _dy, _sx, _sy, _err, _e2, _i, _tmp;
+	int16_t _dx, _dy, _sx, _sy, _err, _i, _tmp;
 
 	/* Check for overflow */
 	if(_x0 >= SSD1306_WIDTH){_x0 = SSD1306_WIDTH - 1;}
@@ -289,12 +289,7 @@ void SSD1306_Draw_Line(int16_t _x0, int16_t _y0, int16_t _x1, int16_t _y1, ssd13
 			_y0 = _tmp;
 		}
 
-		if(_x1 < _x0)
-		{
-			_tmp = _x1;
-			_x1 = _x0;
-			_x0 = _tmp;
-		}
+		if(_x1 < _x0){_x0 = _x1;}
 
 		/* Vertical line */
 		for(_i = _y0; _i <= _y1; _i++){SSD1306_Draw_Pixel(_x0, _i, _color);}
@@ -305,12 +300,7 @@ void SSD1306_Draw_Line(int16_t _x0, int16_t _y0, int16_t _x1, int16_t _y1, ssd13
 
 	if(0 == _dy)
 	{
-		if(_y1 < _y0)
-		{
-			_tmp = _y1;
-			_y1 = _y0;
-			_y0 = _tmp;
-		}
+		if(_y1 < _y0){_y0 = _y1;}
 
 		if(_x1 < _x0)
 		{
@@ -330,7 +320,7 @@ void SSD1306_Draw_Line(int16_t _x0, int16_t _y0, int16_t _x1, int16_t _y1, ssd13
 	{
 		SSD1306_Draw_Pixel(_x0, _y0, _color);
 		if (_x0 == _x1 && _y0 == _y1){break;}
-		_e2 = _err;
+		int16_t _e2 = _err;
 
 		if(_e2 > -_dx)
 		{
