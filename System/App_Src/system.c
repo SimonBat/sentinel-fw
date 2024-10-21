@@ -27,10 +27,16 @@
 #include "display.h"
 
 static system_ts SYSTEM;
-static const uint8_t SYSTEM_PASSWORD[SYSTEM_PASSWORD_NBR]={SYSTEM_BUTTON_UP,SYSTEM_BUTTON_LEFT,SYSTEM_BUTTON_RIGHT,SYSTEM_BUTTON_DOWN,SYSTEM_BUTTON_OK};
+static const uint8_t SYSTEM_PASSWORD[SYSTEM_PASSWORD_NBR] = {
+	SYSTEM_BUTTON_UP, \
+	SYSTEM_BUTTON_LEFT, \
+	SYSTEM_BUTTON_RIGHT, \
+	SYSTEM_BUTTON_DOWN, \
+	SYSTEM_BUTTON_OK
+};
 
 static void SYSTEM_Start_Scheduler(system_ts* _system);
-static int SYSTEM_SWO_Write(int Length, char *Buffer);
+static int SYSTEM_SWO_Write(int _length, char *_buffer);
 static void SYSTEM_Scan_Buttons(system_ts* _system);
 
 /**
@@ -43,8 +49,8 @@ static void SYSTEM_Scan_Buttons(system_ts* _system);
 int main(void)
 {
 	uint8_t _idx;
-	uint8_t _addPinFlag=0;
-	uint8_t _ledHandlerParam=0;
+	uint8_t _addPinFlag = 0U;
+	uint8_t _ledHandlerParam = 0U;
 
 	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
@@ -57,41 +63,40 @@ int main(void)
 	TSL_Driver_Init();
 	FF_PROFILE_Init();
 	LED_On();
-	HAL_Delay(20);
+	HAL_Delay(20U);
 	SSD1306_Driver_Init();
 	BAT_Init();
-	HAL_Delay(80);
+	HAL_Delay(80U);
 	LED_Off();
 
-	SYSTEM.offTmo=SYSTEM_OFF_TMO;
-	SYSTEM.passwordTmo=250;
-	while((SYSTEM.passwordNbr<=SYSTEM_PASSWORD_NBR)&&(SYSTEM.passwordTmo))
+	SYSTEM.offTmo = SYSTEM_OFF_TMO;
+	SYSTEM.passwordTmo = 250U;
+
+	while((SYSTEM.passwordNbr <= SYSTEM_PASSWORD_NBR) && (SYSTEM.passwordTmo))
 	{
 		SYSTEM_Scan_Buttons(&SYSTEM);
 
-		if(SYSTEM.passwordNbr<SYSTEM_PASSWORD_NBR){SYSTEM.passwordTmo=250;}
+		if(SYSTEM.passwordNbr < SYSTEM_PASSWORD_NBR){SYSTEM.passwordTmo = 250U;}
 
-		if((!SYSTEM.button[SYSTEM_BUTTON_UP].statusFlag)&&(!SYSTEM.button[SYSTEM_BUTTON_OK].statusFlag)&&(!SYSTEM.button[SYSTEM_BUTTON_DOWN].statusFlag)&& \
-		   (!SYSTEM.button[SYSTEM_BUTTON_LEFT].statusFlag)&&(!SYSTEM.button[SYSTEM_BUTTON_RIGHT].statusFlag))
+		if((!SYSTEM.button[SYSTEM_BUTTON_UP].statusFlag) && (!SYSTEM.button[SYSTEM_BUTTON_OK].statusFlag) && (!SYSTEM.button[SYSTEM_BUTTON_DOWN].statusFlag) && \
+		   (!SYSTEM.button[SYSTEM_BUTTON_LEFT].statusFlag) && (!SYSTEM.button[SYSTEM_BUTTON_RIGHT].statusFlag))
+		{_addPinFlag = 1U;}
+		else if(((SYSTEM.button[SYSTEM_BUTTON_UP].statusFlag) || (SYSTEM.button[SYSTEM_BUTTON_OK].statusFlag) || (SYSTEM.button[SYSTEM_BUTTON_DOWN].statusFlag) || \
+				 (SYSTEM.button[SYSTEM_BUTTON_LEFT].statusFlag) || (SYSTEM.button[SYSTEM_BUTTON_RIGHT].statusFlag)) && (_addPinFlag))
 		{
-			_addPinFlag=1;
-		}
-		else if(((SYSTEM.button[SYSTEM_BUTTON_UP].statusFlag)||(SYSTEM.button[SYSTEM_BUTTON_OK].statusFlag)||(SYSTEM.button[SYSTEM_BUTTON_DOWN].statusFlag)|| \
-				 (SYSTEM.button[SYSTEM_BUTTON_LEFT].statusFlag)||(SYSTEM.button[SYSTEM_BUTTON_RIGHT].statusFlag))&&(_addPinFlag))
-		{
-			_addPinFlag=0;
-			SYSTEM.offTmo=SYSTEM_OFF_TMO;
+			_addPinFlag = 0U;
+			SYSTEM.offTmo = SYSTEM_OFF_TMO;
 
-			for(_idx=0;_idx<SYSTEM_PASSWORD_NBR;_idx++)
+			for(_idx = 0U; _idx < SYSTEM_PASSWORD_NBR; _idx++)
 			{
 				if(SYSTEM.button[_idx].statusFlag)
 				{
-					if(SYSTEM.passwordNbr<SYSTEM_PASSWORD_NBR)
+					if(SYSTEM.passwordNbr < SYSTEM_PASSWORD_NBR)
 					{
-						SYSTEM.password[SYSTEM.passwordNbr]=_idx;
+						SYSTEM.password[SYSTEM.passwordNbr] = _idx;
 						SYSTEM.passwordNbr++;
 					}
-					SYSTEM.display.passwordNbr=SYSTEM.passwordNbr;
+					SYSTEM.display.passwordNbr = SYSTEM.passwordNbr;
 					break;
 				}
 			}
@@ -102,79 +107,79 @@ int main(void)
 
 		if(!SYSTEM.ledHandlerTmo)
 		{
-			SYSTEM.ledHandlerTmo=LED_HANDLER_TMO;
+			SYSTEM.ledHandlerTmo = LED_HANDLER_TMO;
 			LED_Handler(&_ledHandlerParam);
 		}
 
 		if(!SYSTEM.offTmo){BSP_System_off();}
 	}
 
-	SYSTEM.offTmo=SYSTEM_OFF_TMO;
+	SYSTEM.offTmo = SYSTEM_OFF_TMO;
 
 	/* Check password */
-	for(_idx=0;_idx<SYSTEM_PASSWORD_NBR;_idx++)
+	for(_idx = 0U; _idx < SYSTEM_PASSWORD_NBR; _idx++)
 	{
-		if(SYSTEM.password[_idx]!=SYSTEM_PASSWORD[_idx])
+		if(SYSTEM.password[_idx] != SYSTEM_PASSWORD[_idx])
 		{
-			FF_PROFILE_Check_Error_Log(0);
+			FF_PROFILE_Check_Error_Log(0U);
 			/* Password incorrect - system power off */
 			BSP_System_off();
 		}
 	}
 
-	FF_PROFILE_Check_Error_Log(1);
-	SYSTEM.display.context=1;
+	FF_PROFILE_Check_Error_Log(1U);
+	SYSTEM.display.context = 1U;
 
 	while(!SYSTEM.button[SYSTEM_BUTTON_OK].statusFlag)
 	{
 		SYSTEM_Scan_Buttons(&SYSTEM);
 
-		if((SYSTEM.button[SYSTEM_BUTTON_UP].statusFlag)&&(SYSTEM.display.verticalListIdx>0)&&(!SYSTEM.horizontalListIdxTmo))
+		if((SYSTEM.button[SYSTEM_BUTTON_UP].statusFlag) && (SYSTEM.display.verticalListIdx > 0U) && (!SYSTEM.horizontalListIdxTmo))
 		{
-			SYSTEM.offTmo=SYSTEM_OFF_TMO;
-			SYSTEM.horizontalListIdxTmo=SYSTEM_KEY_TMO;
+			SYSTEM.offTmo = SYSTEM_OFF_TMO;
+			SYSTEM.horizontalListIdxTmo = SYSTEM_KEY_TMO;
 			SYSTEM.display.verticalListIdx--;
 		}
-		else if((SYSTEM.button[SYSTEM_BUTTON_DOWN].statusFlag)&&(SYSTEM.display.verticalListIdx<1)&&(!SYSTEM.horizontalListIdxTmo))
+		else if((SYSTEM.button[SYSTEM_BUTTON_DOWN].statusFlag) && (SYSTEM.display.verticalListIdx < 1U) && (!SYSTEM.horizontalListIdxTmo))
 		{
-			SYSTEM.offTmo=SYSTEM_OFF_TMO;
-			SYSTEM.horizontalListIdxTmo=SYSTEM_KEY_TMO;
+			SYSTEM.offTmo = SYSTEM_OFF_TMO;
+			SYSTEM.horizontalListIdxTmo = SYSTEM_KEY_TMO;
 			SYSTEM.display.verticalListIdx++;
 		}
 
-		if((!SYSTEM.button[SYSTEM_BUTTON_UP].statusFlag)&&(!SYSTEM.button[SYSTEM_BUTTON_DOWN].statusFlag)){SYSTEM.horizontalListIdxTmo=0;}
+		if((!SYSTEM.button[SYSTEM_BUTTON_UP].statusFlag) && (!SYSTEM.button[SYSTEM_BUTTON_DOWN].statusFlag)){SYSTEM.horizontalListIdxTmo = 0U;}
 
 		BAT_Handler();
 		DISPLAY_Prepare_Context(&SYSTEM.display);
 
 		if(!SYSTEM.ledHandlerTmo)
 		{
-			SYSTEM.ledHandlerTmo=LED_HANDLER_TMO;
+			SYSTEM.ledHandlerTmo = LED_HANDLER_TMO;
 			LED_Handler(&_ledHandlerParam);
 		}
 
 		if(!SYSTEM.offTmo){BSP_System_off();}
 	}
 
-	SYSTEM.offTmo=SYSTEM_OFF_TMO;
+	SYSTEM.offTmo = SYSTEM_OFF_TMO;
 
-	if(SYSTEM.display.verticalListIdx==1)
+	if(1U == SYSTEM.display.verticalListIdx)
 	{
 		/* Edit mode */
-		SYSTEM.display.verticalListIdx=0;
-		SYSTEM.display.context=3;
+		SYSTEM.display.verticalListIdx = 0U;
+		SYSTEM.display.context = 3U;
 		USB_Device_Init();
 
-		while(1)
+		while(1U)
 		{
 			SYSTEM_Scan_Buttons(&SYSTEM);
 			BAT_Handler();
 			DISPLAY_Prepare_Context(&SYSTEM.display);
-			SYSTEM.offTmo=SYSTEM_OFF_TMO;
+			SYSTEM.offTmo = SYSTEM_OFF_TMO;
 
 			if(!SYSTEM.ledHandlerTmo)
 			{
-				SYSTEM.ledHandlerTmo=LED_HANDLER_TMO;
+				SYSTEM.ledHandlerTmo = LED_HANDLER_TMO;
 				LED_Handler(&_ledHandlerParam);
 			}
 		}
@@ -182,12 +187,12 @@ int main(void)
 	else
 	{
 		/* Open mode */
-		SYSTEM.offTmo=SYSTEM_OFF_TMO;
-		SYSTEM.display.verticalListIdx=0;
-		SYSTEM.display.horizontalListIdx=0;
-		SYSTEM.display.context=2;
-		SYSTEM.display.xScroll=10;
-		SYSTEM.display.xDirection=0;
+		SYSTEM.offTmo = SYSTEM_OFF_TMO;
+		SYSTEM.display.verticalListIdx = 0U;
+		SYSTEM.display.horizontalListIdx = 0U;
+		SYSTEM.display.context = 2U;
+		SYSTEM.display.xScroll = 10;
+		SYSTEM.display.xDirection = 0U;
 
 		SYSTEM_Start_Scheduler(&SYSTEM);
 	}
@@ -207,130 +212,128 @@ static void SYSTEM_Start_Scheduler(system_ts* _system)
 	HCI_DriverInformation_t HCI_DriverInformation;
 
 	/* Configure the UART Parameters */
-	_system->offTmo=SYSTEM_OFF_TMO;
-	HCI_DRIVER_SET_COMM_INFORMATION(&HCI_DriverInformation, 1, 921600L, cpUART_RTS_CTS);
-	HCI_DriverInformation.DriverInformation.COMMDriverInformation.InitializationDelay = 10;
+	_system->offTmo = SYSTEM_OFF_TMO;
+	HCI_DRIVER_SET_COMM_INFORMATION(&HCI_DriverInformation, 1U, 921600UL, cpUART_RTS_CTS);
+	HCI_DriverInformation.DriverInformation.COMMDriverInformation.InitializationDelay = 10U;
 	/* Set up the application callbacks */
 	BTPS_Initialization.MessageOutputCallback = SYSTEM_SWO_Write;
 
 	/* Initialize the application */
-	if(HOGP_Application_Init(&HCI_DriverInformation, &BTPS_Initialization))
+	if(BT_HOGP_Application_Init(&HCI_DriverInformation, &BTPS_Initialization))
 	{
 		if(BTPS_AddFunctionToScheduler(LED_Handler, NULL, LED_HANDLER_TMO))
 		{
-			if(HOGP_Check_Mailbox_Status())
+			if(BT_HOGP_Check_Mailbox_Status())
 			{
-				while(1)
+				while(1U)
 				{
-					HOGP_Task_Handler();
+					BT_HOGP_Task_Handler();
 					SYSTEM_Scan_Buttons(_system);
 
 					/* Horizontal list control */
-					if((_system->button[SYSTEM_BUTTON_LEFT].statusFlag)&&(_system->display.horizontalListIdx>0)&&(!_system->horizontalListIdxTmo))
+					if((_system->button[SYSTEM_BUTTON_LEFT].statusFlag) && (_system->display.horizontalListIdx > 0U) && (!_system->horizontalListIdxTmo))
 					{
-						_system->horizontalListIdxTmo=SYSTEM_KEY_TMO;
+						_system->horizontalListIdxTmo = SYSTEM_KEY_TMO;
 						_system->display.horizontalListIdx--;
-						_system->display.verticalListIdx=0;
-						_system->display.xScroll=10;
-						_system->display.xDirection=0;
-						_system->offTmo=SYSTEM_OFF_TMO;
+						_system->display.verticalListIdx = 0U;
+						_system->display.xScroll = 10;
+						_system->display.xDirection = 0U;
+						_system->offTmo = SYSTEM_OFF_TMO;
 					}
-					else if((_system->button[SYSTEM_BUTTON_LEFT].statusFlag)&&(_system->display.horizontalListIdx==0)&&(!_system->horizontalListIdxTmo))
+					else if((_system->button[SYSTEM_BUTTON_LEFT].statusFlag) && (0U == _system->display.horizontalListIdx) && (!_system->horizontalListIdxTmo))
 					{
-						_system->horizontalListIdxTmo=SYSTEM_KEY_TMO;
-						_system->display.horizontalListIdx=(FF_PROFILE_Get_Data_Number()-1);
-						_system->display.verticalListIdx=0;
-						_system->display.xScroll=10;
-						_system->display.xDirection=0;
-						_system->offTmo=SYSTEM_OFF_TMO;
+						_system->horizontalListIdxTmo = SYSTEM_KEY_TMO;
+						_system->display.horizontalListIdx = (FF_PROFILE_Get_Data_Number() - 1U);
+						_system->display.verticalListIdx = 0U;
+						_system->display.xScroll = 10;
+						_system->display.xDirection = 0U;
+						_system->offTmo = SYSTEM_OFF_TMO;
 					}
-					else if((_system->button[SYSTEM_BUTTON_RIGHT].statusFlag)&&(_system->display.horizontalListIdx<(FF_PROFILE_Get_Data_Number()-1))&& \
+					else if((_system->button[SYSTEM_BUTTON_RIGHT].statusFlag) && (_system->display.horizontalListIdx < (FF_PROFILE_Get_Data_Number() - 1U)) && \
 							(!_system->horizontalListIdxTmo))
 					{
-						_system->horizontalListIdxTmo=SYSTEM_KEY_TMO;
+						_system->horizontalListIdxTmo = SYSTEM_KEY_TMO;
 						_system->display.horizontalListIdx++;
-						_system->display.verticalListIdx=0;
-						_system->display.xScroll=10;
-						_system->display.xDirection=0;
-						_system->offTmo=SYSTEM_OFF_TMO;
+						_system->display.verticalListIdx = 0U;
+						_system->display.xScroll = 10;
+						_system->display.xDirection = 0U;
+						_system->offTmo = SYSTEM_OFF_TMO;
 					}
-					else if((_system->button[SYSTEM_BUTTON_RIGHT].statusFlag)&&(_system->display.horizontalListIdx==(FF_PROFILE_Get_Data_Number()-1))&& \
+					else if((_system->button[SYSTEM_BUTTON_RIGHT].statusFlag) && (_system->display.horizontalListIdx == (FF_PROFILE_Get_Data_Number() - 1U)) && \
 							(!_system->horizontalListIdxTmo))
 					{
-						_system->horizontalListIdxTmo=SYSTEM_KEY_TMO;
-						_system->display.horizontalListIdx=0;
-						_system->display.verticalListIdx=0;
-						_system->display.xScroll=10;
-						_system->display.xDirection=0;
-						_system->offTmo=SYSTEM_OFF_TMO;
+						_system->horizontalListIdxTmo = SYSTEM_KEY_TMO;
+						_system->display.horizontalListIdx = 0U;
+						_system->display.verticalListIdx = 0U;
+						_system->display.xScroll = 10;
+						_system->display.xDirection = 0U;
+						_system->offTmo = SYSTEM_OFF_TMO;
 					}
 
-					_profileData=FF_PROFILE_Get_Data(_system->display.horizontalListIdx);
+					_profileData = FF_PROFILE_Get_Data(_system->display.horizontalListIdx);
 
 					/* Vertical list control */
-					if((_system->button[SYSTEM_BUTTON_UP].statusFlag)&&(_system->display.verticalListIdx>0)&&(!_system->verticalListIdxTmo))
+					if((_system->button[SYSTEM_BUTTON_UP].statusFlag) && (_system->display.verticalListIdx > 0U) && (!_system->verticalListIdxTmo))
 					{
-						_system->verticalListIdxTmo=SYSTEM_KEY_TMO;
+						_system->verticalListIdxTmo = SYSTEM_KEY_TMO;
 						_system->display.verticalListIdx--;
-						_system->display.xScroll=10;
-						_system->display.xDirection=0;
-						_system->offTmo=SYSTEM_OFF_TMO;
+						_system->display.xScroll = 10;
+						_system->display.xDirection = 0U;
+						_system->offTmo = SYSTEM_OFF_TMO;
 					}
-					else if((_system->button[SYSTEM_BUTTON_UP].statusFlag)&&(_system->display.verticalListIdx==0)&&(!_system->verticalListIdxTmo))
+					else if((_system->button[SYSTEM_BUTTON_UP].statusFlag) && (0U == _system->display.verticalListIdx) && (!_system->verticalListIdxTmo))
 					{
-						_system->verticalListIdxTmo=SYSTEM_KEY_TMO;
-						_system->display.verticalListIdx=(_profileData->dataNbr);
-						_system->display.xScroll=10;
-						_system->display.xDirection=0;
-						_system->offTmo=SYSTEM_OFF_TMO;
+						_system->verticalListIdxTmo = SYSTEM_KEY_TMO;
+						_system->display.verticalListIdx = (_profileData->dataNbr);
+						_system->display.xScroll = 10;
+						_system->display.xDirection = 0U;
+						_system->offTmo = SYSTEM_OFF_TMO;
 					}
-					else if((_system->button[SYSTEM_BUTTON_DOWN].statusFlag)&&(_system->display.verticalListIdx<(_profileData->dataNbr))&& \
+					else if((_system->button[SYSTEM_BUTTON_DOWN].statusFlag) && (_system->display.verticalListIdx < (_profileData->dataNbr)) && \
 							(!_system->verticalListIdxTmo))
 					{
-						_system->verticalListIdxTmo=SYSTEM_KEY_TMO;
+						_system->verticalListIdxTmo = SYSTEM_KEY_TMO;
 						_system->display.verticalListIdx++;
-						_system->display.xScroll=10;
-						_system->display.xDirection=0;
-						_system->offTmo=SYSTEM_OFF_TMO;
+						_system->display.xScroll = 10;
+						_system->display.xDirection = 0U;
+						_system->offTmo = SYSTEM_OFF_TMO;
 					}
-					else if((_system->button[SYSTEM_BUTTON_DOWN].statusFlag)&&(_system->display.verticalListIdx==(_profileData->dataNbr))&& \
+					else if((_system->button[SYSTEM_BUTTON_DOWN].statusFlag) && (_system->display.verticalListIdx == (_profileData->dataNbr)) && \
 							(!_system->verticalListIdxTmo))
 					{
-						_system->verticalListIdxTmo=SYSTEM_KEY_TMO;
-						_system->display.verticalListIdx=0;
-						_system->display.xScroll=10;
-						_system->display.xDirection=0;
-						_system->offTmo=SYSTEM_OFF_TMO;
+						_system->verticalListIdxTmo = SYSTEM_KEY_TMO;
+						_system->display.verticalListIdx = 0U;
+						_system->display.xScroll = 10;
+						_system->display.xDirection = 0U;
+						_system->offTmo = SYSTEM_OFF_TMO;
 					}
-					else if((_system->button[SYSTEM_BUTTON_OK].statusFlag)&&(!_system->dataTxTmo))
+					else if((_system->button[SYSTEM_BUTTON_OK].statusFlag) && (!_system->dataTxTmo))
 					{
-						_system->dataTxTmo=SYSTEM_KEY_TMO;
-						_system->offTmo=SYSTEM_OFF_TMO;
-						if(_system->display.verticalListIdx==0){HOGP_Send_Data_Reports(_profileData->url,_profileData->urlSize);}
-						else{HOGP_Send_Data_Reports(_profileData->dataBuffer[_system->display.verticalListIdx-1],_profileData->dataSize[_system->display.verticalListIdx-1]);}
+						_system->dataTxTmo = SYSTEM_KEY_TMO;
+						_system->offTmo = SYSTEM_OFF_TMO;
+						if(0U == _system->display.verticalListIdx){BT_HOGP_Send_Data_Reports(_profileData->url, _profileData->urlSize);}
+						else{BT_HOGP_Send_Data_Reports(_profileData->dataBuffer[_system->display.verticalListIdx - 1U], \
+													   _profileData->dataSize[_system->display.verticalListIdx - 1U]);}
 					}
 
-					if((!_system->button[SYSTEM_BUTTON_LEFT].statusFlag)&&(!_system->button[SYSTEM_BUTTON_RIGHT].statusFlag)){_system->horizontalListIdxTmo=0;}
-					if((!_system->button[SYSTEM_BUTTON_UP].statusFlag)&&(!_system->button[SYSTEM_BUTTON_DOWN].statusFlag)){_system->verticalListIdxTmo=0;}
+					if((!_system->button[SYSTEM_BUTTON_LEFT].statusFlag) && (!_system->button[SYSTEM_BUTTON_RIGHT].statusFlag)){_system->horizontalListIdxTmo = 0U;}
+					if((!_system->button[SYSTEM_BUTTON_UP].statusFlag) && (!_system->button[SYSTEM_BUTTON_DOWN].statusFlag)){_system->verticalListIdxTmo = 0U;}
 
 					BAT_Handler();
-					_system->display.btFlag=HOGP_Get_Connection_Status();
+					_system->display.btFlag = BT_HOGP_Get_Connection_Status();
 					DISPLAY_Prepare_Context(&_system->display);
 
 					if(!_system->batteryLevelTmo)
 					{
-						_system->batteryLevelTmo=1000;
-						HOGP_Update_Battery_Level();
+						_system->batteryLevelTmo = 1000U;
+						BT_HOGP_Update_Battery_Level();
 					}
 
 					if(!_system->offTmo){BSP_System_off();}
 				}
-			}
-			else{BSP_Error_Handler();}
-		}
-		else{BSP_Error_Handler();}
-	}
-	else{BSP_Error_Handler();}
+			}else{BSP_Error_Handler();}
+		}else{BSP_Error_Handler();}
+	}else{BSP_Error_Handler();}
 }
 
 /**
@@ -342,9 +345,7 @@ static void SYSTEM_Start_Scheduler(system_ts* _system)
   */
 static int SYSTEM_SWO_Write(int _length, char *_buffer)
 {
-	uint32_t _len;
-
-	for(_len=0;_len<_length;_len++){ITM_SendChar(*_buffer++);}
+	for(uint32_t _len = 0U; _len < _length; _len++){ITM_SendChar(*_buffer++);}
 
 	return 1;
 }
@@ -358,8 +359,6 @@ static int SYSTEM_SWO_Write(int _length, char *_buffer)
   */
 void SYSTEM_Update_TMO(void)
 {
-	uint8_t _idx;
-
 	if(SYSTEM.display.updateTmo){SYSTEM.display.updateTmo--;}
 	if(SYSTEM.passwordTmo){SYSTEM.passwordTmo--;}
 	if(SYSTEM.ledHandlerTmo){SYSTEM.ledHandlerTmo--;}
@@ -369,7 +368,7 @@ void SYSTEM_Update_TMO(void)
 	if(SYSTEM.batteryLevelTmo){SYSTEM.batteryLevelTmo--;}
 	if(SYSTEM.offTmo){SYSTEM.offTmo--;}
 
-	for(_idx=0;_idx<SYSTEM_BUTTONS;_idx++)
+	for(uint8_t _idx = 0U; _idx < SYSTEM_BUTTONS; _idx++)
 	{
 		if(SYSTEM.button[_idx].onTmo){SYSTEM.button[_idx].onTmo--;}
 		if(SYSTEM.button[_idx].offTmo){SYSTEM.button[_idx].offTmo--;}
@@ -385,26 +384,25 @@ void SYSTEM_Update_TMO(void)
   */
 static void SYSTEM_Scan_Buttons(system_ts* _system)
 {
-	uint8_t _idx;
 	tsl_user_status_t tsl_status;
 
 	/* Execute STMTouch Driver state machine */
 	tsl_status=TSL_User_Handler();
 
-	if(tsl_status!=TSL_USER_STATUS_BUSY)
+	if(TSL_USER_STATUS_BUSY != tsl_status)
 	{
-		for(_idx=0;_idx<SYSTEM_BUTTONS;_idx++)
+		for(uint8_t _idx = 0U; _idx < SYSTEM_BUTTONS; _idx++)
 		{
-			if((TSL_TKEYS_B[_idx].p_Data->StateId==TSL_STATEID_DETECT)&&(!_system->button[_idx].onTmo))
+			if((TSL_STATEID_DETECT == TSL_TKEYS_B[_idx].p_Data->StateId) && (!_system->button[_idx].onTmo))
 			{
-				_system->button[_idx].offTmo=SYSTEM_BUTTON_OFF_TMO;
-				_system->button[_idx].statusFlag=1;
+				_system->button[_idx].offTmo = SYSTEM_BUTTON_OFF_TMO;
+				_system->button[_idx].statusFlag = 1U;
 				LED_Pulse();
 			}
-			else if((TSL_TKEYS_B[_idx].p_Data->StateId==TSL_STATEID_RELEASE)&&(!_system->button[_idx].offTmo))
+			else if((TSL_STATEID_RELEASE == TSL_TKEYS_B[_idx].p_Data->StateId) && (!_system->button[_idx].offTmo))
 			{
-				_system->button[_idx].onTmo=SYSTEM_BUTTON_ON_TMO;
-				_system->button[_idx].statusFlag=0;
+				_system->button[_idx].onTmo = SYSTEM_BUTTON_ON_TMO;
+				_system->button[_idx].statusFlag = 0U;
 			}
 		}
 	}
