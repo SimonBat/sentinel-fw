@@ -32,8 +32,6 @@ void FF_PROFILE_Init(void)
 {
 	FRESULT _res;
 	uint8_t _ffBuffer[128];
-	uint16_t _urlNbrIdx;
-	uint8_t _urlDataNbrIdx;
 	__IO uint8_t _idx = 0U;
 	__IO uint32_t _bytesRead;
 
@@ -63,7 +61,7 @@ void FF_PROFILE_Init(void)
 				else if(4U == _idx){PROFILE.dataNbr = (_ffBuffer[0] - 48U) * 100U + ((_ffBuffer[1] - 48U) * 10U) + (_ffBuffer[1] - 48U);}
 				else{BSP_Error_Handler();}
 
-				for(_urlNbrIdx = 0U; _urlNbrIdx < PROFILE.dataNbr; _urlNbrIdx++)
+				for(uint16_t _urlNbrIdx = 0U; _urlNbrIdx < PROFILE.dataNbr; _urlNbrIdx++)
 				{
 					/* Find the '<' symbol */
 					do{
@@ -107,7 +105,7 @@ void FF_PROFILE_Init(void)
 
 					PROFILE.data[_urlNbrIdx].dataNbr = _ffBuffer[0] - 48U;
 
-					for(_urlDataNbrIdx = 0U; _urlDataNbrIdx < PROFILE.data[_urlNbrIdx].dataNbr; _urlDataNbrIdx++)
+					for(uint8_t _urlDataNbrIdx = 0U; _urlDataNbrIdx < PROFILE.data[_urlNbrIdx].dataNbr; _urlDataNbrIdx++)
 					{
 						/* Find the '<' symbol */
 						_idx = 0U;
@@ -167,7 +165,6 @@ void FF_PROFILE_Check_Error_Log(uint8_t _status)
 	uint8_t _ffBuffer[128];
 	__IO uint8_t _idx = 0U;
 	__IO uint32_t _bytesRead;
-	uint8_t _errorNbr;
 
 	if(FR_OK == f_open(&PROFILE.errLogFile, FF_PROFILE_ERROR_LOG_FNAME, (FA_READ | FA_WRITE)))
 	{
@@ -186,12 +183,12 @@ void FF_PROFILE_Check_Error_Log(uint8_t _status)
 			else{_idx++;}
 		}while('>' != _ffBuffer[_idx - 1U]);
 
-		_errorNbr = _ffBuffer[0] - 48U;
+		uint8_t _errorNbr = _ffBuffer[0] - 48U;
 		f_close(&PROFILE.errLogFile);
 
 		if(FR_OK == f_open(&PROFILE.errLogFile, FF_PROFILE_ERROR_LOG_FNAME, (FA_READ | FA_WRITE)))
 		{
-			if((0U == _status) || ((0U != _status) && (_errorNbr >= 3U)))
+			if((0U == _status) || (_errorNbr >= 3U))
 			{
 				if((_errorNbr + 1U) >= 3U)
 				{

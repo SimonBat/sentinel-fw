@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="1">
+    <builddir>Cppcheck</builddir>
+    <analyze-all-vs-configs>false</analyze-all-vs-configs>
+    <check-headers>true</check-headers>
+    <check-unused-templates>true</check-unused-templates>
+    <inline-suppression>true</inline-suppression>
+    <max-ctu-depth>2</max-ctu-depth>
+    <max-template-recursion>100</max-template-recursion>
+    <includedir>
+        <dir name="System/App_Inc/"/>
+    </includedir>
+    <paths>
+        <dir name="System/App_Src"/>
+    </paths>
+    <suppressions>
+        <suppression>missingInclude</suppression>
+        <suppression>missingIncludeSystem</suppression>
+        <suppression>unusedFunction</suppression>
+    </suppressions>
+    <check-level-exhaustive/>
+    <project-name>
+</project-name>
+</project>
